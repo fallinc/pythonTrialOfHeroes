@@ -1,0 +1,80 @@
+import requests
+import os
+import urllib.request
+
+# Funkcija za download slike
+
+
+def download_pic(image_url, file_name):
+    full_file_name = str(file_name) + '.jpg'
+    urllib.request.urlretrieve(image_url, full_file_name)
+
+
+def main():
+
+    # Otvaranje web lokacija
+
+    r = requests.get("https://jsonplaceholder.typicode.com/albums", auth=('user', 'pass'))
+    rpic = requests.get("https://jsonplaceholder.typicode.com/photos", auth=('user', 'pass'))
+
+    # Smjestanje podataka u liste dictionary-ja
+
+    list_of_albums = r.json()
+    list_of_pictures = rpic.json()
+
+    # Unos kljucne rijeci
+
+    entry = input(str("Unesite kljucnu rijec: "))
+
+    # Stvaranje liste u koju ce se upisati nazivi albuma (title)
+
+    title_list = []
+
+    # Za svaki album iz liste uzima se njegov naziv i smjesta u novu listu
+
+    for dic in list_of_albums:
+        titles = dic.get("title")
+        title_list.append(titles)
+
+    # Stvaranje liste u koju ce se smjestiti nazivi albuma koji odgovaraju kljucnoj rijeci
+
+    found_titles = []
+
+    # Razdvajanje rijeci iz naziva albuma radi lakse provjere da li je unesena kljucna rijec
+    # podstring neke rijeci iz naziva albuma
+
+    for item in title_list:
+        item_split = item.split(" ")
+        for word in item_split:
+                if entry.lower() in word.lower():
+                    found_titles.append(item)
+
+    # Poredjenje title value-a iz niza u kojem se nalaze albumi ciji title value-i odgovaraju kljucnoj rijeci
+    # Kad se title-ovi podudare povlaci se id albuma radi poredjenja sa albumId-jem slika, te se kreira
+    # direktorij i dodjeljuje mu se ime title value-a albuma, potom se mijenja lokacija egzekucije ostatka programa
+    # u novonastali direktorij, te se tu smjestaju slike s odgovarajucim albumId-jem
+
+    for dic in list_of_albums:
+        for title in found_titles:
+            p = dic.get("title")
+            if p == title:
+                os.mkdir(title.replace(" ", ""))
+                path = "./" + title.replace(" ", "")
+                os.chdir(path)
+                a_id = dic.get("id")
+
+                # Ako se albumId slike poklapa sa id-jem albuma, downloaduje se slika
+
+                for pic in list_of_pictures:
+                    album_id = pic.get("albumId")
+                    if a_id == album_id:
+                        pic_url = pic.get("url")
+                        pic_name = pic.get("title")
+                        download_pic(pic_url, pic_name)
+
+    # Vracanje u parent direktorij
+
+                os.chdir("..")
+
+
+main()
